@@ -20,7 +20,7 @@ for idx, algo in enumerate(all_submissions):
     )
     try:
         # Construct the path to stitcher.py
-        module_name = f"{algo.split(os.sep)[-1]}_stitcher"
+        module_name = f"Shipra_stitcher"
         filepath = f"{algo}{os.sep}stitcher.py"
 
         # Dynamically load the stitcher module

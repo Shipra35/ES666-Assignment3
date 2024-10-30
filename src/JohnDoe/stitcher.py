@@ -1,6 +1,11 @@
 import cv2
 import numpy as np
 import glob
+import logging
+
+# Set up logging for results
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class PanaromaStitcher:
     def __init__(self):
@@ -14,11 +19,11 @@ class PanaromaStitcher:
     def make_panaroma_for_images_in(self, path):
         image_paths = glob.glob('{}/*.*'.format(path))
         if len(image_paths) < 2:
-            raise ValueError("Minimum two images to create a panorama")
+            raise ValueError("Minimum two images required")
 
         images = [cv2.imread(im_path) for im_path in image_paths]
         if any(image is None for image in images):
-            raise ValueError("Error reading files from the path")
+            raise ValueError("Cant read files!!")
 
         stitched_image = images[0]
         homography_matrix_list = []
@@ -28,16 +33,19 @@ class PanaromaStitcher:
             kp2, des2 = self.sift.detectAndCompute(images[i], None)
 
             if des1 is None or des2 is None:
+                logger.warning(f"No descriptors found in image {i}. Skipping this pair.")
                 continue
 
             knn_matches = self.matcher.knnMatch(des1, des2, k=2)
 
+            # Ratio test for matches without cross-checking
             good_matches = []
             for m, n in knn_matches:
                 if m.distance < 0.85 * n.distance:
                     good_matches.append(m)
 
             if len(good_matches) < 6:
+                logger.warning(f"Not enough good matches between image {i} and image {i-1}")
                 continue
 
             pts1 = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 2)
@@ -45,6 +53,7 @@ class PanaromaStitcher:
 
             H = self.compute_homography(pts2, pts1)
             if H is None:
+                logger.warning(f"Failed to compute homography for image {i} and image {i-1}")
                 continue
 
             homography_matrix_list.append(H)
@@ -77,6 +86,7 @@ class PanaromaStitcher:
         try:
             U, S, Vt = np.linalg.svd(A)
         except np.linalg.LinAlgError:
+            logger.warning("SVD did not converge")
             return None
         H_norm = Vt[-1].reshape(3, 3)
         H = np.linalg.inv(T2) @ H_norm @ T1      # Denormalizing

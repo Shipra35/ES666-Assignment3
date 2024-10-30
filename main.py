@@ -21,7 +21,7 @@ for idx, algo in enumerate(all_submissions):
 
     try:
         # Construct the path to stitcher.py inside the submission folder
-        module_name = f"{os.path.basename(algo)}_stitcher"  # Unique name for each module
+        module_name = f"Shipra_stitcher"  # Unique name for each module
         filepath = os.path.join(algo, 'stitcher.py')
 
         # Dynamically load the stitcher module

@@ -4,8 +4,8 @@ import importlib.util
 import os
 import cv2
 
-### Change path to images here
-path = f'Images{os.sep}*'  # Use os.sep for cross-platform compatibility
+### Change path to images here (for cross-platform compatibility)
+path = f'Images{os.sep}*'
 
 # Get all submission folders inside ./src/
 all_submissions = glob.glob('./src/*')
@@ -16,12 +16,13 @@ os.makedirs('./results/', exist_ok=True)
 for idx, algo in enumerate(all_submissions):
     print(
         f'****************\tRunning Awesome Stitcher developed by: '
-        f'{algo.split(os.sep)[-1]}  | {idx + 1} of {len(all_submissions)}\t********************'
+        f'{os.path.basename(algo)}  | {idx + 1} of {len(all_submissions)}\t********************'
     )
+
     try:
-        # Construct the path to stitcher.py
-        module_name = f"Shipra_stitcher"
-        filepath = f"{algo}{os.sep}stitcher.py"
+        # Construct the path to stitcher.py inside the submission folder
+        module_name = f"{os.path.basename(algo)}_stitcher"  # Unique name for each module
+        filepath = os.path.join(algo, 'stitcher.py')
 
         # Dynamically load the stitcher module
         spec = importlib.util.spec_from_file_location(module_name, filepath)
@@ -33,15 +34,15 @@ for idx, algo in enumerate(all_submissions):
         inst = PanaromaStitcher()
 
         # Process each image set in the given path
-        for impaths in glob.glob(path):
-            print(f'\t\t Processing... {impaths}')
+        for impath in glob.glob(path):
+            print(f'\t\tProcessing... {impath}')
 
             # Run the panorama stitching method
-            stitched_image, homography_matrix_list = inst.make_panaroma_for_images_in(path=impaths)
+            stitched_image, homography_matrix_list = inst.make_panaroma_for_images_in(impath)
 
             # Construct the output path
-            output_dir = f'./results/{impaths.split(os.sep)[-1]}'
-            outfile = f'{output_dir}/{module_name}.png'
+            output_dir = f'./results/{os.path.basename(impath)}'
+            outfile = os.path.join(output_dir, f'{module_name}.png')
 
             # Create the output directory if it doesn't exist
             os.makedirs(output_dir, exist_ok=True)
@@ -53,4 +54,4 @@ for idx, algo in enumerate(all_submissions):
             print(f'Panorama saved ... @ {outfile}\n\n')
 
     except Exception as e:
-        print(f'Oh No! My implementation encountered this issue\n\t{e}\n\n')
+        print(f'Oh No! My implementation encountered this issue:\n\t{e}\n\n')
